@@ -4,6 +4,7 @@ import { Category, Transaction, TransactionsByMonth } from "../types";
 import { useSQLiteContext } from "expo-sqlite";
 import TransactionsList from "../components/TransactionsList";
 import Card from "../components/ui/Card";
+import AddTransaction from "../components/AddTransaction";
 
 const Home = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,6 +57,24 @@ const Home = () => {
     });
   }
 
+  async function insertTransaction(transaction: Transaction) {
+    db.withTransactionAsync(async () => {
+      await db.runAsync(
+        `
+        INSERT INTO Transactions (category_id, amount, date, description, type) VALUES (?, ?, ?, ?, ?);
+      `,
+        [
+          transaction.category_id,
+          transaction.amount,
+          transaction.date,
+          transaction.description,
+          transaction.type,
+        ]
+      );
+      await getData();
+    });
+  }
+
   useEffect(() => {
     db.withTransactionAsync(async () => {
       await getData();
@@ -69,6 +88,7 @@ const Home = () => {
         paddingVertical: 170,
       }}
     >
+      <AddTransaction insertTransaction={insertTransaction}/>
       <TransactionSummary
         totalIncome={transactionsByMonth.totalIncome}
         totalExpenses={transactionsByMonth.totalExpenses}
@@ -155,7 +175,6 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 10,
   },
-  // Removed moneyText style since we're now generating it dynamically
 });
 
 export default Home;
